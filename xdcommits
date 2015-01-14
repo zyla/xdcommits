@@ -16,12 +16,13 @@ XDCOMMITS_ROOT=$(dirname $(readlink -f $0))
 
 
 main() {
-	local command=$1
-	shift
-	if [ -z "$command" ]; then
+	if [ "$#" -lt 1 ]; then
 		print_usage
 		exit 1
 	fi
+
+	local command=$1
+	shift
 
 	case $command in
 		help)
