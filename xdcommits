@@ -4,20 +4,11 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-
-CONFIG_FILE=~/.xdcommits/config
-TARGET_DIR=~/.lolcommits
-SETTLE_FRAMES=1
-GIF_FRAMES=5
-GIF_FPS=5
-IMAGE_VIEWER=feh
-
 XDCOMMITS_ROOT=$(dirname $(readlink -f $0))
 
-[ -f $CONFIG_FILE ] && source $CONFIG_FILE
-
-
 main() {
+	sanity_check
+
 	if [ "$#" -lt 1 ]; then
 		print_usage
 		exit 1
@@ -40,6 +31,11 @@ main() {
 	esac
 }
 
+get_config() {
+	local name="$1" default_value="$2"
+	git config xdcommits.$name || echo $default_value
+}
+
 do_capture() {
 	require_repo
 	tmpdir=$(mktemp -d)
@@ -51,13 +47,15 @@ do_capturegif() {
 	require_repo
 	tmpdir=$(mktemp -d)
 	trap 'rm -rf $tmpdir' EXIT
-	annotate_and_save_image $(capture_frames $tmpdir $GIF_FRAMES)
+	annotate_and_save_image $(capture_frames $tmpdir $(get_config gifFrames 5))
 }
 
 capture_frames() {
 	tmpdir=$1
 	frames_count=$2
-	mplayer tv:// -tv width=640:height=480:device=/dev/video0 -fps 15 -frames $(( SETTLE_FRAMES + frames_count )) -vo jpeg:outdir=$tmpdir > /dev/null 2>&1 ||\
+	local settle_frames=$(get_config settleFrames 1)
+	mplayer tv:// -tv width=640:height=480:device=/dev/video0 -fps 15 \
+		-frames $(( settle_frames + frames_count )) -vo jpeg:outdir=$tmpdir > /dev/null 2>&1 ||\
 		{ echo "mplayer fucked up!"; exit 1; }
 	find $tmpdir -name '*.jpg' | sort | tail -n $frames_count
 }
@@ -86,7 +84,7 @@ annotate_and_save_image() {
 
 get_outdir() {
 	name=$(basename $(get_toplevel))
-	outdir=$TARGET_DIR/$name
+	outdir=$(get_config targetDir $HOME/.lolcommits)/$name
 	mkdir -p $outdir
 	echo $outdir
 }
@@ -136,7 +134,7 @@ do_show() {
 		echo "Not captured yet!"
 		exit 1
 	fi
-	exec $IMAGE_VIEWER $filename
+	exec $(get_config imageViewer feh) $filename
 }
 
 die() {
@@ -177,5 +175,4 @@ sanity_check() {
 	done
 }
 
-sanity_check
 main "$@"
