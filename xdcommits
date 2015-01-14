@@ -5,11 +5,12 @@ set -euo pipefail
 IFS=$'\n\t'
 
 
+CONFIG_FILE=~/.xdcommits/config
 TARGET_DIR=~/.lolcommits
 FRAMES=1
 IMAGE_VIEWER=feh
 
-[ -f ~/.xdcommits ] && source ~/.xdcomits
+[ -f $CONFIG_FILE ] && source $CONFIG_FILE
 
 main() {
 	local command=$1
