@@ -25,9 +25,8 @@ Manual capture:
 
 Automatic capture:
 
-    # Write the hook yourself because I'm too lazy
-    # ...
-    git commit
+    xdcommits enable
+    git commit # should trigger a capture
 
 ## Copyright issues
 
