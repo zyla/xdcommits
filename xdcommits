@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# http://redsymbol.net/articles/unofficial-bash-strict-mode/
+set -euo pipefail
+IFS=$'\n\t'
+
+
+TARGET_DIR=~/.lolcommits
+FRAMES=1
+
+[ -f ~/.xdcommits ] && source ~/.xdcomits
+
+main() {
+	local command=$1
+	if [ -z "$command" ]; then
+		print_usage
+		exit 1
+	fi
+
+	case $command in
+		help)
+			print_usage
+			;;
+		enable|capture|disable)
+			do_$command
+			;;
+		*)
+			echo "Skąd znasz te prawdy? Nie z sztuki wróżenia!"
+			exit 66
+			;;
+	esac
+}
+
+do_capture() {
+	require_repo
+	tmpdir=$(mktemp -d)
+	trap 'rm -rf $tmpdir' EXIT
+	mplayer tv:// -tv width=640:height=480:device=/dev/video0 -fps 15 -frames $FRAMES -vo jpeg:outdir=$tmpdir > /dev/null 2>&1 ||\
+		{ echo "mplayer fucked up!"; exit 1; }
+	image=$(find $tmpdir -name '*.jpg' | sort | tail -n1)
+	annotate_and_save_image $image
+}
+
+annotate_and_save_image() {
+	image=$1
+	outdir=$(get_outdir)
+	sha=$(git rev-parse --short=11 HEAD)
+	filename=$outdir/${sha}.jpg
+	commit_msg=$(git log --no-walk --format=%s)
+	font=$(dirname $(readlink -f $0))/Impact.ttf
+	hour=$(date -d "$(git log --no-walk --format=%cD --date=iso8601)" +%H:%M)
+	convert $image \
+		-font $font \
+		-strokewidth 2 -stroke black -fill white \
+		-pointsize 48 -gravity southwest -annotate 0 "$commit_msg" \
+		-pointsize 24 -gravity northeast -annotate 0 "$sha" \
+		-pointsize 24 -gravity northwest -annotate 0 "$hour" \
+		$filename
+}
+
+get_outdir() {
+	name=$(basename $(get_toplevel))
+	outdir=$TARGET_DIR/$name
+	mkdir -p $outdir
+	echo $outdir
+}
+
+do_enable() {
+	echo "Not implemented yet"
+	exit 1
+}
+
+do_disable() {
+	echo "Not implemented yet"
+	exit 1
+}
+
+print_usage() {
+echo <<EOF
+Usage: xdcommits <command> [options]
+
+  xdcommits help        print this message
+  xdcommits enable      install hook in current repository
+  xdcommits enable -g   install hook in Git template (requires write access to /usr/share/git-core/templates)
+  xdcommits capture     record your ugly face
+EOF
+}
+
+require_repo() {
+	get_toplevel > /dev/null || exit 1
+}
+
+get_toplevel() {
+	git rev-parse --show-toplevel
+}
+
+main "$@"
