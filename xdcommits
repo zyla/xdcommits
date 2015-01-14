@@ -10,7 +10,10 @@ TARGET_DIR=~/.lolcommits
 FRAMES=1
 IMAGE_VIEWER=feh
 
+XDCOMMITS_ROOT=$(dirname $(readlink -f $0))
+
 [ -f $CONFIG_FILE ] && source $CONFIG_FILE
+
 
 main() {
 	local command=$1
@@ -49,7 +52,7 @@ annotate_and_save_image() {
 	sha=$(git rev-parse --short=11 HEAD)
 	filename=$outdir/${sha}.jpg
 	commit_msg=$(git log --no-walk --format=%s)
-	font=$(dirname $(readlink -f $0))/Impact.ttf
+	font=$XDCOMMITS_ROOT/Impact.ttf
 	hour=$(date -d "$(git log --no-walk --format=%cD --date=iso8601)" +%H:%M)
 	convert $image \
 		-font $font \
@@ -109,4 +112,17 @@ get_toplevel() {
 	git rev-parse --show-toplevel
 }
 
+sanity_check() {
+	local required_files="Impact.ttf"
+
+	for file in $required_files; do
+		if [ ! -f $XDCOMMITS_ROOT/$file ]; then
+			echo "Missing file: $file"
+			echo "Did you install xdcommits properly?"
+			exit 1
+		fi
+	done
+}
+
+sanity_check
 main "$@"
