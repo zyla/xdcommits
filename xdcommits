@@ -7,7 +7,9 @@ IFS=$'\n\t'
 
 CONFIG_FILE=~/.xdcommits/config
 TARGET_DIR=~/.lolcommits
-FRAMES=1
+SETTLE_FRAMES=1
+GIF_FRAMES=5
+GIF_FPS=5
 IMAGE_VIEWER=feh
 
 XDCOMMITS_ROOT=$(dirname $(readlink -f $0))
@@ -28,7 +30,7 @@ main() {
 		help)
 			print_usage
 			;;
-		enable|capture|disable|show)
+		enable|capture|capturegif|disable|show)
 			do_$command "$@"
 			;;
 		*)
@@ -42,21 +44,30 @@ do_capture() {
 	require_repo
 	tmpdir=$(mktemp -d)
 	trap 'rm -rf $tmpdir' EXIT
-	mplayer tv:// -tv width=640:height=480:device=/dev/video0 -fps 15 -frames $FRAMES -vo jpeg:outdir=$tmpdir > /dev/null 2>&1 ||\
+	annotate_and_save_image $(capture_frames $tmpdir 1)
+}
+
+do_capturegif() {
+	require_repo
+	tmpdir=$(mktemp -d)
+	trap 'rm -rf $tmpdir' EXIT
+	annotate_and_save_image $(capture_frames $tmpdir $GIF_FRAMES)
+}
+
+capture_frames() {
+	tmpdir=$1
+	frames_count=$2
+	mplayer tv:// -tv width=640:height=480:device=/dev/video0 -fps 15 -frames $(( SETTLE_FRAMES + frames_count )) -vo jpeg:outdir=$tmpdir > /dev/null 2>&1 ||\
 		{ echo "mplayer fucked up!"; exit 1; }
-	images=$(find $tmpdir -name '*.jpg' | sort)
-	annotate_and_save_image $images
+	find $tmpdir -name '*.jpg' | sort | tail -n $frames_count
 }
 
 annotate_and_save_image() {
 	images=$*
 	outdir=$(get_outdir)
 	sha=$(git rev-parse --short=11 HEAD)
-	alt_opts=""
-
 	if [ "$#" -gt 1 ]; then
 		filename=$outdir/${sha}.gif
-		alt_opts="$alt_opts -fuzz 10% -layers Optimize"
 	else
 		filename=$outdir/${sha}.jpg
 	fi
@@ -69,7 +80,7 @@ annotate_and_save_image() {
 		-pointsize 48 -gravity southwest -annotate 0 "$commit_msg" \
 		-pointsize 24 -gravity northeast -annotate 0 "$sha" \
 		-pointsize 24 -gravity northwest -annotate 0 "$hour" \
-		$alt_opts \
+		-layers Optimize \
 		$filename
 }
 
