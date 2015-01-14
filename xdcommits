@@ -44,24 +44,32 @@ do_capture() {
 	trap 'rm -rf $tmpdir' EXIT
 	mplayer tv:// -tv width=640:height=480:device=/dev/video0 -fps 15 -frames $FRAMES -vo jpeg:outdir=$tmpdir > /dev/null 2>&1 ||\
 		{ echo "mplayer fucked up!"; exit 1; }
-	image=$(find $tmpdir -name '*.jpg' | sort | tail -n1)
-	annotate_and_save_image $image
+	images=$(find $tmpdir -name '*.jpg' | sort)
+	annotate_and_save_image $images
 }
 
 annotate_and_save_image() {
-	image=$1
+	images=$*
 	outdir=$(get_outdir)
 	sha=$(git rev-parse --short=11 HEAD)
-	filename=$outdir/${sha}.jpg
+	alt_opts=""
+
+	if [ "$#" -gt 1 ]; then
+		filename=$outdir/${sha}.gif
+		alt_opts="$alt_opts -fuzz 10% -layers Optimize"
+	else
+		filename=$outdir/${sha}.jpg
+	fi
 	commit_msg=$(git log --no-walk --format=%s)
 	font=$XDCOMMITS_ROOT/Impact.ttf
 	hour=$(date -d "$(git log --no-walk --format=%cD --date=iso8601)" +%H:%M)
-	convert $image \
+	convert $images \
 		-font $font \
 		-strokewidth 2 -stroke black -fill white \
 		-pointsize 48 -gravity southwest -annotate 0 "$commit_msg" \
 		-pointsize 24 -gravity northeast -annotate 0 "$sha" \
 		-pointsize 24 -gravity northwest -annotate 0 "$hour" \
+		$alt_opts \
 		$filename
 }
 
@@ -112,7 +120,7 @@ do_disable() {
 do_show() {
 	require_repo
 	sha=$(git rev-parse --short=11 HEAD)
-	filename=$(get_outdir)/${sha}.jpg
+	filename=$(get_outdir)/${sha}.*
 	if [ ! -f $filename ]; then
 		echo "Not captured yet!"
 		exit 1
