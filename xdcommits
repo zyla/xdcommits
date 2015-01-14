@@ -89,7 +89,7 @@ do_show() {
 }
 
 print_usage() {
-echo <<EOF
+cat <<EOF
 Usage: xdcommits <command> [options]
 
   xdcommits help        print this message
@@ -97,6 +97,7 @@ Usage: xdcommits <command> [options]
   xdcommits enable -g   install hook in Git template (requires write access to /usr/share/git-core/templates)
   xdcommits capture     record your ugly face
   xdcommits show        display xdcommit of current commit
+
 EOF
 }
 
