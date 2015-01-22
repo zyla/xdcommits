@@ -26,6 +26,7 @@ main() {
 			;;
 		*)
 			echo "Skąd znasz te prawdy? Nie z sztuki wróżenia!"
+			echo $command
 			exit 66
 			;;
 	esac
@@ -37,6 +38,14 @@ get_config() {
 }
 
 do_capture() {
+	if [ "$(git config --bool xdcommits.fork)" != false ]; then
+		really_capture &
+	else
+		really_capture
+	fi
+}
+
+really_capture() {
 	require_repo
 	tmpdir=$(mktemp -d)
 	trap 'rm -rf $tmpdir' EXIT
