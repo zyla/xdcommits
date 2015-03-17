@@ -47,6 +47,10 @@ do_capture() {
 
 really_capture() {
 	require_repo
+	if [ -d "$(git rev-parse --git-dir)/rebase-merge" ]; then
+		echo "Rebase in progress; Not capturing." >&2
+		exit
+	fi
 	tmpdir=$(mktemp -d)
 	trap 'rm -rf $tmpdir' EXIT
 	annotate_and_save_image $(capture_frames $tmpdir 1)
