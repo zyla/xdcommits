@@ -143,7 +143,7 @@ do_show() {
 	require_repo
 	sha=$(git rev-parse --short=11 HEAD)
 	filename=$(find $(get_outdir) -name ${sha}'.*' | head -1)
-	if [ ! -f $filename ]; then
+	if [ ! -f "$filename" ]; then
 		echo "Not captured yet!"
 		exit 1
 	fi
