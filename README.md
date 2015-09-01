@@ -1,5 +1,3 @@
-# ty janie commicie capturowany xD
-
 Everybody knows that [lolcommits](https://github.com/mroth/lolcommits) is the
 most important tool in modern software development. However, not everybody can
 be bothered to install 12434 RubyGerms just to shell out to mplayer and
