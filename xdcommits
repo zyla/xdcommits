@@ -67,10 +67,18 @@ capture_frames() {
 	tmpdir=$1
 	frames_count=$2
 	local settle_frames=$(get_config settleFrames 1)
+	local application=$(get_config application mplayer)
+
+	if [ "$application" == "ffmpeg" ]; then
+	ffmpeg -f video4linux2 -i /dev/video0 -vframes 1 $tmpdir/test.jpg  > /dev/null 2>&1 ||\
+		{ echo "ffmpeg fucked up!"; exit 1; }
+	find $tmpdir -name 'test.jpg'
+    else
 	mplayer tv:// -tv width=640:height=480:device=/dev/video0 -fps 15 \
 		-frames $(( settle_frames + frames_count )) -vo jpeg:outdir=$tmpdir > /dev/null 2>&1 ||\
 		{ echo "mplayer fucked up!"; exit 1; }
 	find $tmpdir -name '*.jpg' | sort | tail -n $frames_count
+	fi
 }
 
 annotate_and_save_image() {
