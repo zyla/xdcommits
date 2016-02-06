@@ -68,16 +68,20 @@ capture_frames() {
 	frames_count=$2
 	local settle_frames=$(get_config settleFrames 1)
 	local application=$(get_config application mplayer)
+	local filename
 
 	if [ "$application" == "ffmpeg" ]; then
-	ffmpeg -f video4linux2 -i /dev/video0 -vframes 1 $tmpdir/test.jpg  > /dev/null 2>&1 ||\
-		{ echo "ffmpeg fucked up!"; exit 1; }
-	find $tmpdir -name 'test.jpg'
-    else
-	mplayer tv:// -tv width=640:height=480:device=/dev/video0 -fps 15 \
-		-frames $(( settle_frames + frames_count )) -vo jpeg:outdir=$tmpdir > /dev/null 2>&1 ||\
-		{ echo "mplayer fucked up!"; exit 1; }
-	find $tmpdir -name '*.jpg' | sort | tail -n $frames_count
+		filename=test.jpg
+		if [ "$frames_count" -gt 1 ]; then filename=test.gif; fi
+		ffmpeg -f video4linux2 -i /dev/video0 -r 15 -vframes $frames_count \
+			$tmpdir/$filename > /dev/null 2>&1 ||\
+			{ echo "ffmpeg fucked up!"; exit 1; }
+		find $tmpdir -name $filename
+	else
+		mplayer tv:// -tv width=640:height=480:device=/dev/video0 -fps 15 \
+			-frames $(( settle_frames + frames_count )) -vo jpeg:outdir=$tmpdir > /dev/null 2>&1 ||\
+			{ echo "mplayer fucked up!"; exit 1; }
+		find $tmpdir -name '*.jpg' | sort | tail -n $frames_count
 	fi
 }
 
@@ -85,7 +89,7 @@ annotate_and_save_image() {
 	images=$*
 	outdir=$(get_outdir)
 	sha=$(git rev-parse --short=11 HEAD)
-	if [ "$#" -gt 1 ]; then
+	if [ "$#" -gt 1 -o "gif" == $(echo basename $images | awk -F. '{print $NF}') ]; then
 		filename=$outdir/${sha}.gif
 	else
 		filename=$outdir/${sha}.jpg
