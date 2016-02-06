@@ -46,6 +46,9 @@ Relevant options:
  
  - `xdcommits.imageViewer` - command used by `xdcommits show`. One argument will
    be passed - the image file name.
+ 
+ - `xdcommits.application` - used to specify which capture application should be
+   used. Current options are `ffmpeg` and `mplayer`. The default is `mplayer`.
 
 ## Copyright issues
 
