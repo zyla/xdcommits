@@ -7,7 +7,8 @@ Therefore I present you a clone, xdcommits, written in plain bash.
 
 ## Requirements
 
- - mplayer (with video4linux support - not enabled by default in gentoo)
+ - mplayer (with video4linux support - not enabled by default in gentoo) or
+   ffmpeg
  - ImageMagick
 
 ## Installation
@@ -38,7 +39,8 @@ Relevant options:
 
  - `xdcommits.settleFrames` - number of frames to discard before the real
    capture. Use this is if your webcam takes some time to warm up. Default
-   value: 1 (the second frame will be used).
+   value: 1 (the second frame will be used). *Not currently supported when using
+   ffmpeg*.
  
  - `xdcommits.gifFrames` - number of frames used when capturing GIFs. Note that
    `settleFrames` is also respected; GIF frames will be captured after the
