@@ -21,7 +21,7 @@ main() {
 		help)
 			print_usage
 			;;
-		enable|capture|capturegif|disable|show)
+		enable|capture|capturegif|disable|show|last)
 			do_$command "$@"
 			;;
 		*)
@@ -160,6 +160,18 @@ do_show() {
 		exit 1
 	fi
 	exec $(get_config imageViewer feh) $filename
+}
+
+do_last() {
+	require_repo
+	local sha=$(git rev-parse --short=11 HEAD)
+	local outDir=$(get_outdir)
+	filename=$(find $outDir -name ${sha}'.*' | head -1)
+	if [ ! -f "$filename" ]; then
+		echo "Image for ${sha} was not found in ${outDir}"
+		exit 1
+	fi
+	echo $filename
 }
 
 die() {
