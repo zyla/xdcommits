@@ -199,12 +199,16 @@ sanity_check() {
 		fi
 	done
 
-	for prog in mplayer convert; do
+	for prog in convert; do
 		if [ ! -x "$(which $prog)" ]; then
 			echo "ERROR: '$prog' is required."
 			exit 1
 		fi
 	done
+    if [ ! -x "$(which ffmpeg)" ] && [ ! -x "$(which mplayer)" ]; then
+        echo "ERROR: either mplayer or ffmpeg are required."
+        exit 1
+    fi
 }
 
 main "$@"
