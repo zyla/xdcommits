@@ -21,7 +21,7 @@ main() {
 		help)
 			print_usage
 			;;
-		enable|capture|capturegif|disable|show)
+		enable|capture|capturegif|disable|show|last)
 			do_$command "$@"
 			;;
 		*)
@@ -162,6 +162,18 @@ do_show() {
 	exec $(get_config imageViewer feh) $filename
 }
 
+do_last() {
+	require_repo
+	local sha=$(git rev-parse --short=11 HEAD)
+	local outDir=$(get_outdir)
+	filename=$(find $outDir -name ${sha}'.*' | head -1)
+	if [ ! -f "$filename" ]; then
+		echo "Image for ${sha} was not found in ${outDir}"
+		exit 1
+	fi
+	echo $filename
+}
+
 die() {
 	echo "$@"
 	exit 1
@@ -199,12 +211,16 @@ sanity_check() {
 		fi
 	done
 
-	for prog in mplayer convert; do
+	for prog in convert; do
 		if [ ! -x "$(which $prog)" ]; then
 			echo "ERROR: '$prog' is required."
 			exit 1
 		fi
 	done
+    if [ ! -x "$(which ffmpeg)" ] && [ ! -x "$(which mplayer)" ]; then
+        echo "ERROR: either mplayer or ffmpeg are required."
+        exit 1
+    fi
 }
 
 main "$@"
